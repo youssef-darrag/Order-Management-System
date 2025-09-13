@@ -54,11 +54,32 @@ namespace OrderManagementSystem.EF.Services
             return new AuthDto
             {
                 Email = user.Email,
-                ExpiresOn = jwtSecurityToken.ValidTo,
+                ExpiresOn = jwtSecurityToken.ValidTo.ToLocalTime(),
                 IsAuthenticated = true,
                 Roles = new List<string> { "User" },
                 Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken),
                 UserName = user.UserName
+            };
+        }
+
+        public async Task<AuthDto> GetTokenAsync(TokenRequestDto dto)
+        {
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+
+            if (user is null || !await _userManager.CheckPasswordAsync(user, dto.Password))
+                return new AuthDto { Message = "Email or Password is incorrect!" };
+
+            var jwtSecurityToken = await CreateJwtToken(user);
+            var rolesList = await _userManager.GetRolesAsync(user);
+
+            return new AuthDto
+            {
+                IsAuthenticated = true,
+                Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken),
+                Email = user.Email!,
+                UserName = user.UserName!,
+                ExpiresOn = jwtSecurityToken.ValidTo.ToLocalTime(),
+                Roles = rolesList.ToList()
             };
         }
 
@@ -88,7 +109,7 @@ namespace OrderManagementSystem.EF.Services
                 issuer: _jwt.Issuer,
                 audience: _jwt.Audience,
                 claims: claims,
-                expires: DateTime.Now.AddDays(_jwt.DurationInMinutes),
+                expires: DateTime.UtcNow.AddMinutes(_jwt.DurationInMinutes).ToLocalTime(),
                 signingCredentials: signingCredentials);
 
             return jwtSecurityToken;

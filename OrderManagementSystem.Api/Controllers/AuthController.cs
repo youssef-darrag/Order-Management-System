@@ -25,5 +25,16 @@ namespace OrderManagementSystem.Api.Controllers
 
             return Ok(result);
         }
+
+        [HttpPost("token")]
+        public async Task<IActionResult> GetTokenAsync([FromBody] TokenRequestDto dto)
+        {
+            var result = await _authService.GetTokenAsync(dto);
+
+            if (!result.IsAuthenticated)
+                return BadRequest(result.Message);
+
+            return Ok(result);
+        }
     }
 }
