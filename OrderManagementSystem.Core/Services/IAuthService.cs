@@ -1,4 +1,4 @@
-﻿using OrderManagementSystem.Api.DTOs;
+﻿using OrderManagementSystem.Core.DTOs.Auth;
 
 namespace OrderManagementSystem.Core.Services
 {
@@ -6,5 +6,6 @@ namespace OrderManagementSystem.Core.Services
     {
         Task<AuthDto> RegisterAsync(RegisterDto dto);
         Task<AuthDto> GetTokenAsync(TokenRequestDto dto);
+        Task<string> AddRoleAsync(AddRoleDto dto);
     }
 }

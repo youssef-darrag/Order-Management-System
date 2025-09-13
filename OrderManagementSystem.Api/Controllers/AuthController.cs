@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using OrderManagementSystem.Api.DTOs;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using OrderManagementSystem.Core.DTOs.Auth;
 using OrderManagementSystem.Core.Services;
 
 namespace OrderManagementSystem.Api.Controllers
@@ -35,6 +36,18 @@ namespace OrderManagementSystem.Api.Controllers
                 return BadRequest(result.Message);
 
             return Ok(result);
+        }
+
+        [HttpPost("addrole")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AddRoleAsync([FromBody] AddRoleDto dto)
+        {
+            var result = await _authService.AddRoleAsync(dto);
+
+            if (!string.IsNullOrEmpty(result))
+                return BadRequest(result);
+
+            return Ok(dto);
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using OrderManagementSystem.Api.DTOs;
+using OrderManagementSystem.Core.DTOs.Auth;
 using OrderManagementSystem.Core.Helpers;
 using OrderManagementSystem.Core.Models;
 using OrderManagementSystem.Core.Services;
@@ -14,11 +14,13 @@ namespace OrderManagementSystem.EF.Services
     public class AuthService : IAuthService
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly JWT _jwt;
 
-        public AuthService(UserManager<ApplicationUser> userManager, IOptions<JWT> jwt)
+        public AuthService(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IOptions<JWT> jwt)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
             _jwt = jwt.Value;
         }
 
@@ -81,6 +83,21 @@ namespace OrderManagementSystem.EF.Services
                 ExpiresOn = jwtSecurityToken.ValidTo.ToLocalTime(),
                 Roles = rolesList.ToList()
             };
+        }
+
+        public async Task<string> AddRoleAsync(AddRoleDto dto)
+        {
+            var user = await _userManager.FindByIdAsync(dto.UserId);
+
+            if (user is null || !await _roleManager.RoleExistsAsync(dto.Role))
+                return "Invalid User ID or Role!";
+
+            if (await _userManager.IsInRoleAsync(user, dto.Role))
+                return "User already assigned to this role";
+
+            var result = await _userManager.AddToRoleAsync(user, dto.Role);
+
+            return result.Succeeded ? string.Empty : "Something went wrong!";
         }
 
         private async Task<JwtSecurityToken> CreateJwtToken(ApplicationUser user)
